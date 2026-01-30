@@ -62,7 +62,7 @@ function provideHoverHandler(document, position, token, type) {
     if (!settings.extensionConfig().hover.enable) {
         return;
     }
-    const range = document.getWordRangeAtPosition(position, /(tx\.gasprice|tx\.origin|msg\.data|msg\.sender|msg\.sig|msg\.value|block\.coinbase|block\.difficulty|block\.gaslimit|block\.number|block\.timestamp|abi\.encodePacked|abi\.encodeWithSelector|abi\.encodeWithSignature|abi\.decode|abi\.encode|\.?[0-9_\w>]+)/);
+    const range = document.getWordRangeAtPosition(position, /(tx\.(?:gasprice|origin)|msg\.(?:data|sender|sig|value)|block\.(?:coinbase|difficulty|gaslimit|number|timestamp)|abi\.(?:encodePacked|encodeWithSelector|encodeWithSignature|decode|encode)|\.?[\w>]+)/);
     if (!range || range.length <= 0)
         return;
     const word = document.getText(range);
