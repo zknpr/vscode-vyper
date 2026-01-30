@@ -90,3 +90,4 @@ dist/**
 
 # OSX
 .DS_Store
+*.vsix
