@@ -1,38 +1,45 @@
 {
-    "name": "vscode-vyper",
+    "name": "vscode-vyper-ex",
     "displayName": "Vyper",
     "description": "Ethereum Vyper language support for Visual Studio Code",
     "license": "MIT",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "keywords": [
         "vyper",
         "ethereum",
         "blockchain",
         "compiler",
-        "security"
+        "security",
+        "smart-contracts",
+        "web3"
     ],
-    "publisher": "tintinweb",
+    "publisher": "zknpr",
     "icon": "images/icon.png",
     "galleryBanner": {
         "color": "#EDE5D5",
         "theme": "light"
     },
     "engines": {
-        "vscode": "^1.87.0"
+        "vscode": "^1.85.0"
     },
     "categories": [
         "Programming Languages",
-        "Snippets"
+        "Snippets",
+        "Linters",
+        "Formatters"
     ],
     "bugs": {
-        "url": "https://github.com/tintinweb/vscode-vyper/issues"
+        "url": "https://github.com/zknpr/vscode-vyper-ex/issues"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/tintinweb/vscode-vyper"
+        "url": "https://github.com/zknpr/vscode-vyper-ex"
     },
     "main": "./src/extension.js",
     "browser": "./dist/web/extension.js",
+    "activationEvents": [
+        "onLanguage:vyper"
+    ],
     "contributes": {
         "languages": [
             {
@@ -123,6 +130,11 @@
                     "type": "string",
                     "default": "vyper",
                     "description": "Defines how to invoke the vyper compiler command. This can by any shell command and the vyper arguments will be passed to this command as <vyper.command> <args>. Default is to assume vyper is installed in PATH and executable as `vyper`"
+                },
+                "vyper.formatter.command": {
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "External formatter command. Leave empty to use built-in formatter. Example: `black -` (reads from stdin)."
                 }
             }
         },
@@ -132,31 +144,47 @@
                 "title": "Vyper: Compile"
             }
         ],
-        "x-keybindings": [
+        "keybindings": [
             {
-                "key": "cmd+alt+shift+i",
-                "command": "editor.action.inspectTMScopes"
+                "key": "ctrl+shift+b",
+                "mac": "cmd+shift+b",
+                "command": "vyper.compileContract",
+                "when": "editorLangId == vyper"
             }
         ]
     },
-    "scripts": {
-        "fetchGrammar": "rm -f syntaxes/vyper.tmLanguage.json  && python3 ./scripts/fetch_vyper_language_spec.py > syntaxes/vyper.tmLanguage.json",
-        "test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js",
-        "pretest": "npm run compile-web",
-        "vscode:prepublish": "npm run package-web",
-        "compile-web": "webpack -c config/web.webpack.config.js",
-        "watch-web": "webpack -c config/web.webpack.config.js --watch",
-        "package-web": "webpack -c config/web.webpack.config.js --mode production --devtool hidden-source-map",
-        "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. ."
+    "capabilities": {
+        "documentFormattingProvider": "true",
+        "documentRangeFormattingProvider": "true"
     },
-    "dependencies": {
-        "async": "^3.2.4",
-        "chai": "^4.2.0",
-        "shell-escape": "^0.2.0"
+    "scripts": {
+        "vscode:prepublish": "npm run package",
+        "compile": "npm run compile-web",
+        "compile-web": "webpack -c config/web.webpack.config.js",
+        "watch": "webpack -c config/web.webpack.config.js --watch",
+        "watch-web": "webpack -c config/web.webpack.config.js --watch",
+        "package": "webpack -c config/web.webpack.config.js --mode production --devtool hidden-source-map",
+        "package-web": "webpack -c config/web.webpack.config.js --mode production --devtool hidden-source-map",
+        "lint": "eslint src --ext .js,.ts",
+        "lint:fix": "eslint src --ext .js,.ts --fix",
+        "format": "prettier --write \"src/**/*.{js,ts,json}\"",
+        "format:check": "prettier --check \"src/**/*.{js,ts,json}\"",
+        "test": "npm run compile-web && vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js",
+        "pretest": "npm run compile-web",
+        "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. .",
+        "fetchGrammar": "rm -f syntaxes/vyper.tmLanguage.json && python3 ./scripts/fetch_vyper_language_spec.py > syntaxes/vyper.tmLanguage.json",
+        "clean": "rm -rf dist node_modules"
     },
     "devDependencies": {
-        "@vscode/test-web": "^0.0.52",
-        "webpack": "^5.66.0",
-        "webpack-cli": "^4.9.1"
+        "@eslint/js": "^9.18.0",
+        "@types/node": "^20.11.0",
+        "@types/vscode": "^1.85.0",
+        "@vscode/test-web": "^0.0.62",
+        "@vscode/vsce": "^3.2.2",
+        "chai": "^5.1.2",
+        "eslint": "^9.18.0",
+        "prettier": "^3.4.2",
+        "webpack": "^5.97.1",
+        "webpack-cli": "^6.0.1"
     }
 }

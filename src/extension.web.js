@@ -1,20 +1,20 @@
 'use strict';
-/** 
+/**
  * @author github.com/tintinweb
  * @license MIT
- * 
+ *
  * language definition based on: https://raw.githubusercontent.com/Microsoft/vscode/master/extensions/python/syntaxes/MagicPython.tmLanguage.json (MIT)
  * compilation related parts taken from: https://github.com/trufflesuite/truffle/tree/develop/packages/truffle-compile-vyper (MIT)
  * */
 
 /** imports */
-const vscode = require("vscode");
+const vscode = require('vscode');
 
-const mod_deco = require("./features/deco.js");
-const settings = require("./settings");
-const mod_hover = require("./features/hover/hover.js");
+const mod_deco = require('./features/deco.js');
+const settings = require('./settings');
+const mod_hover = require('./features/hover/hover.js');
 /** global vars */
-var activeEditor;
+let activeEditor;
 
 /** classdecs */
 
@@ -24,72 +24,72 @@ var activeEditor;
 
 /** event funcs */
 async function onDidSave(document) {
-    if (document.languageId != settings.LANGUAGE_ID) {
-        console.log("Language ID mismatch");
+    if (document.languageId !== settings.LANGUAGE_ID) {
+        console.log('Language ID mismatch');
         return;
     }
 
     const fileExtension = document.fileName.split('.').pop();
-        
-    if (fileExtension != "vy") {
-        console.log("Skipping compilation for interface file");
+
+    if (fileExtension !== 'vy') {
+        console.log('Skipping compilation for interface file');
         return;
     }
 }
 
-async function onDidChange(event) {
-    if (vscode.window.activeTextEditor.document.languageId != settings.LANGUAGE_ID) {
+async function onDidChange(_event) {
+    if (vscode.window.activeTextEditor.document.languageId !== settings.LANGUAGE_ID) {
         return;
     }
 
     if(settings.extensionConfig().decoration.enable){
         mod_deco.decorateWords(activeEditor, [
             {
-                regex:"^@\\b(public|nonpayable|modifying|payable|external|deploy)\\b",
-                captureGroup: 0,
+                regex:'^@\\b(public|nonpayable|modifying|payable|external|deploy)\\b',
+                captureGroup: 0
             },
             {
-                regex:"\\b(send|raw_call|selfdestruct|create_forwarder_to|create_minimal_proxy_to|create_copy_of|create_from_blueprint)\\b",
+                regex:'\\b(send|raw_call|selfdestruct|create_forwarder_to|create_minimal_proxy_to|create_copy_of|create_from_blueprint)\\b',
                 captureGroup: 0,
-                hoverMessage: "❗**potentially unsafe** lowlevel call"
+                hoverMessage: '❗**potentially unsafe** lowlevel call'
             },
             {
-                regex:"\\b(extcall|staticcall)\\b",
-                captureGroup: 0,
-            },
+                regex:'\\b(extcall|staticcall)\\b',
+                captureGroup: 0
+            }
         ], mod_deco.styles.foreGroundWarning);
         mod_deco.decorateWords(activeEditor, [
             {
-                regex:"\\b(\\.balance|msg\\.[\\w]+|block\\.[\\w]+)\\b",
-                captureGroup: 0,
+                regex:'\\b(\\.balance|msg\\.[\\w]+|block\\.[\\w]+)\\b',
+                captureGroup: 0
             }
         ], mod_deco.styles.foreGroundInfoUnderline);
         mod_deco.decorateWords(activeEditor, [
             {
-                regex:"^@\\b(private|nonreentrant|constant|internal|view|pure|event)\\b",
-                captureGroup: 0,
-            },
+                regex:'^@\\b(private|nonreentrant|constant|internal|view|pure|event)\\b',
+                captureGroup: 0
+            }
         ], mod_deco.styles.foreGroundOk);
         mod_deco.decorateWords(activeEditor, [
             {
-                regex:"\\b(log)\\.",
-                captureGroup: 1,
+                regex:'\\b(log)\\.',
+                captureGroup: 1
             },
             {
-                regex:"\\b(clear)\\b\\(",
-                captureGroup: 1,
-            },
+                regex:'\\b(clear)\\b\\(',
+                captureGroup: 1
+            }
         ], mod_deco.styles.foreGroundNewEmit);
         mod_deco.decorateWords(activeEditor, [
             {
-                regex:"\\b(__init__|__default__)\\b",
-                captureGroup: 0,
-            },
+                regex:'\\b(__init__|__default__)\\b',
+                captureGroup: 0
+            }
         ], mod_deco.styles.boldUnderline);
     }
 }
 function onInitModules(context, type) {
-  mod_hover.init(context, type);
+    mod_hover.init(context, type);
 }
 
 function onActivate(context) {
@@ -100,9 +100,7 @@ function onActivate(context) {
     registerDocType(settings.LANGUAGE_ID);
 
     function registerDocType(type) {
-        context.subscriptions.push(
-            vscode.languages.reg
-        );
+        // Broken subscription removed
 
         // taken from: https://github.com/Microsoft/vscode/blob/master/extensions/python/src/pythonMain.ts ; slightly modified
         // autoindent while typing
@@ -117,7 +115,7 @@ function onActivate(context) {
 
 
         if (!settings.extensionConfig().mode.active) {
-            console.log("ⓘ activate extension: entering passive mode. not registering any active code augmentation support.");
+            console.log('ⓘ activate extension: entering passive mode. not registering any active code augmentation support.');
             return;
         }
         /** module init */

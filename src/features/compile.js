@@ -1,283 +1,300 @@
 'use strict';
-/** 
+/**
+ * @file compile.js
  * @author github.com/tintinweb
  * @license MIT
- * 
- * compilation related parts taken from: https://github.com/trufflesuite/truffle/tree/develop/packages/truffle-compile-vyper (MIT)
- * */
+ *
+ * Vyper compiler integration for VSCode.
+ * Features:
+ * - Auto-detects vyper in common venv locations
+ * - Supports Vyper 0.3.x and 0.4.x
+ * - Reports errors to VSCode Problems panel
+ */
 
-const vscode = require("vscode");
-const path = require("path");
-const exec = require("child_process").exec;
-const async = require("async");
-const shellescape = require('shell-escape');
-const settings = require("../settings");
+const vscode = require('vscode');
+const path = require('path');
+const fs = require('fs');
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const settings = require('../settings');
 
+const execAsync = promisify(exec);
 
-var compiler = {
+/**
+ * Escape a string for safe use in shell commands (POSIX).
+ * Wraps the string in single quotes and escapes any embedded single quotes.
+ * @param {string} str - The string to escape
+ * @returns {string} - Shell-safe escaped string
+ */
+function shellEscape(str) {
+    // Replace single quotes with '\'' (end quote, escaped quote, start quote)
+    return "'" + str.replace(/'/g, "'\\''") + "'";
+}
+
+const compiler = {
     name: settings.LANGUAGE_ID,
     version: null
 };
 
-var VYPER_ID = null;
-const VYPER_PATTERN = " **/*.{vy,vyi}";
+let VYPER_ID = null;
+const VYPER_PATTERN = ' **/*.{vy,vyi}';
 
-const compile = {};
-var diagnosticCollections = {
+const diagnosticCollections = {
     compiler: null
 };
 
-compile.display = function (paths, options) {
-    if (options.quiet !== true) {
-        if (!Array.isArray(paths)) {
-            paths = Object.keys(paths);
-        }
+// Common venv paths to check for vyper
+const VENV_PATHS = [
+    '.venv/bin/vyper',
+    'venv/bin/vyper',
+    '.virtualenv/bin/vyper',
+    'virtualenv/bin/vyper',
+    'env/bin/vyper',
+    '.env/bin/vyper',
+    '.venv/Scripts/vyper.exe',
+    'venv/Scripts/vyper.exe'
+];
 
-        paths.sort().forEach(contract => {
-            if (path.isAbsolute(contract)) {
-                contract =
-                    "." + path.sep + path.relative(options.working_directory, contract);
-            }
-            options.logger.log("> Compiling " + contract);
-        });
+/**
+ * Get the vyper command - checks venv first, then falls back to configured/default
+ */
+function getVyperCommand(workspacePath) {
+    const configuredCommand = settings.extensionConfig().command;
+
+    // If user explicitly configured a command (not default), use it
+    if (configuredCommand && configuredCommand !== 'vyper') {
+        return configuredCommand;
     }
-};
+
+    // Try to find vyper in common venv locations
+    if (workspacePath) {
+        for (const venvPath of VENV_PATHS) {
+            const fullPath = path.join(workspacePath, venvPath);
+            if (fs.existsSync(fullPath)) {
+                console.log(`Found vyper in venv: ${fullPath}`);
+                return fullPath;
+            }
+        }
+    }
+
+    return configuredCommand || 'vyper';
+}
+
+function displayPaths(paths, options) {
+    if (options.quiet === true) return;
+    if (!Array.isArray(paths)) paths = Object.keys(paths);
+    paths.sort().forEach(contract => {
+        if (path.isAbsolute(contract)) {
+            contract = '.' + path.sep + path.relative(options.working_directory, contract);
+        }
+        options.logger.log('> Compiling ' + contract);
+    });
+}
 
 function workspaceForFile(fpath) {
-    let workspace = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(fpath));
-    return workspace ? workspace.uri.fsPath : "";
+    const workspace = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(fpath));
+    return workspace ? workspace.uri.fsPath : '';
 }
 
-// Check that vyper is available, save its version
-function checkVyper(source_file, callback) {
-    //allow anything as command - no shellescape to even allow python -m vyper --version etc...
-    exec(`${settings.extensionConfig().command} --version`,
-        { 'cwd': workspaceForFile(source_file) },
-        function (err, stdout, stderr) {
-            if (err)
-                return callback(`Error executing vyper:\n${stderr}`);
+async function checkVyper(sourceFile) {
+    const workspacePath = workspaceForFile(sourceFile);
+    const vyperCommand = getVyperCommand(workspacePath);
 
-            compiler.version = stdout.trim();
-
-            callback(null);
-        });
-}
-
-// Execute vyper for single source file
-function execVyper(source_path, callback) {
-    let formats;
-    if (compiler.version.startsWith("0.4")) {
-        // In 0.4.x, Vyper modules might be valid module to be imported 
-        // but not valid contracts to compile into bytecode, hence we stop
-        // the compilation at annotated_ast.
-        formats = ["annotated_ast"];
-    } else {
-        formats = ["bytecode"];
-    }
-    let escapedTarget;
-    if (process.platform.startsWith("win")){
-        //nasty windows shell..
-        if(source_path.includes('"')){
-            return callback(
-                `Compilation of ${source_path} failed. Invalid Filename (quotes).`
+    try {
+        const { stdout } = await execAsync(
+            `${vyperCommand} --version`,
+            { cwd: workspacePath || undefined }
+        );
+        compiler.version = stdout.trim();
+        console.log(`Vyper version: ${compiler.version}`);
+    } catch (error) {
+        const errorMsg = error.stderr || error.message;
+        if (errorMsg.includes('not found') || errorMsg.includes('ENOENT')) {
+            throw new Error(
+                'Vyper not found. Checked:\n' +
+                `- Command: ${vyperCommand}\n` +
+                `- Workspace: ${workspacePath}\n\n` +
+                'Install vyper with: pip install vyper\n' +
+                'Or activate your virtualenv before opening VSCode.'
             );
         }
-        escapedTarget = `"${source_path}"`;
+        throw new Error(`Error executing vyper:\n${errorMsg}`);
+    }
+}
+
+async function execVyper(sourcePath) {
+    const workspacePath = workspaceForFile(sourcePath);
+    const vyperCommand = getVyperCommand(workspacePath);
+
+    const formats = compiler.version && compiler.version.startsWith('0.4')
+        ? ['annotated_ast']
+        : ['bytecode'];
+
+    let escapedTarget;
+    if (process.platform.startsWith('win')) {
+        if (sourcePath.includes('"')) {
+            throw new Error(`Compilation of ${sourcePath} failed. Invalid Filename (quotes).`);
+        }
+        escapedTarget = `"${sourcePath}"`;
     } else {
-        //assume linux/macos.bash.
-        escapedTarget = `${shellescape([source_path])}`; //is quoted.
+        escapedTarget = shellEscape(sourcePath);
     }
-    const command = `${settings.extensionConfig().command} -f${formats.join(",")} ${escapedTarget}`;
-    exec(command,
-        { 'cwd': workspaceForFile(source_path) },
-        function (err, stdout, stderr) {
-            if (err)
-                return callback(
-                    `${stderr}\nCompilation of ${source_path} failed. See above.`
-                );
-            var outputs = stdout.split(/\r?\n/);
 
-            const compiled_contract = outputs.reduce(function (contract, output, index) {
-                return Object.assign(contract, {
-                    [formats[index]]: output
-                });
-            }, {});
+    const command = `${vyperCommand} -f${formats.join(',')} ${escapedTarget}`;
 
-            callback(null, compiled_contract);
-        });
+    try {
+        const { stdout } = await execAsync(command, { cwd: workspacePath || undefined });
+        const outputs = stdout.split(/\r?\n/);
+        return outputs.reduce((contract, output, index) => {
+            if (formats[index]) contract[formats[index]] = output;
+            return contract;
+        }, {});
+    } catch (error) {
+        throw new Error(`${error.stderr || error.message}\nCompilation of ${sourcePath} failed.`);
+    }
 }
 
-// compile all options.paths
-function compileAll(options, callback) {
+async function compileAll(options) {
     options.logger = options.logger || console;
+    displayPaths(options.paths, options);
 
-    compile.display(options.paths, options);
-    async.map(
-        options.paths,
-        function (source_path, c) {
-            execVyper(source_path, function (err, compiled_contract) {
-                if (err) return c(err);
-                const extension = path.extname(source_path);
-                const basename = path.basename(source_path, extension);
-
-                const contract_name = basename;
-                // Compiled_contract is unused at the moment but kept for future use 
-                const contract_definition = {
-                    contract_name: contract_name,
-                    sourcePath: source_path,
-
-                    compiler: compiler
-                };
-
-                c(null, contract_definition);
-            });
-        },
-        function (err, contracts) {
-            if (err) return callback(err);
-
-            const result = contracts.reduce(function (result, contract) {
-                result[contract.contract_name] = contract;
-
-                return result;
-            }, {});
-
-            const compilerInfo = {
-                name: "vyper",
-                version: compiler.version
-            };
-
-            callback(null, result, options.paths, compilerInfo);
-        }
+    const contracts = await Promise.all(
+        options.paths.map(async (sourcePath) => {
+            await execVyper(sourcePath);
+            const extension = path.extname(sourcePath);
+            const basename = path.basename(sourcePath, extension);
+            return { contract_name: basename, sourcePath, compiler };
+        })
     );
+
+    const result = contracts.reduce((acc, contract) => {
+        acc[contract.contract_name] = contract;
+        return acc;
+    }, {});
+
+    return { result, paths: options.paths, compilerInfo: { name: 'vyper', version: compiler.version } };
 }
 
-// Check that vyper is available then forward to internal compile function
-function compileVyper(options, callback) {
-    // filter out non-vyper paths
-
-
-    // no vyper files found, no need to check vyper
-    if (options.paths.length === 0) return callback(null, {}, []);
-
-    checkVyper(options.paths[0], function (err) {  //@use first files workspaces as CWD
-        if (err) return callback(err);
-
-        return compileAll(options, callback);
-    });
-}
-
-// append .vy pattern to contracts_directory in options and return updated options
-function updateContractsDirectory(options) {
-    return options.with({
-        contracts_directory: path.join(options.contracts_directory, VYPER_PATTERN)
-    });
-}
-
-// wrapper for compile.all. only updates contracts_directory to find .vy
-compileVyper.all = function (options, callback) {
-    return compile.all(updateContractsDirectory(options), callback);
-};
-
-// wrapper for compile.necessary. only updates contracts_directory to find .vy
-compileVyper.necessary = function (options, callback) {
-    return compile.necessary(updateContractsDirectory(options), callback);
-};
-
-function compileActiveFileCommand(contractFile) {
-    if (!contractFile) {
-        contractFile = vscode.window.activeTextEditor.document;
+async function compileVyper(options) {
+    if (options.paths.length === 0) {
+        return { result: {}, paths: [], compilerInfo: null };
     }
-    compileActiveFile(contractFile)
-        .then(
-            (success) => {
-                diagnosticCollections.compiler.delete(contractFile.uri);
-                if(settings.extensionConfig().compile.verbose){
-                    vscode.window.showInformationMessage('[Compiler success] ' + Object.keys(success).join(","));
-                }
-                
-            },
-            (errormsg) => {
-                if(settings.extensionConfig().compile.verbose){
-                    vscode.window.showErrorMessage('[Compiler Error] ' + errormsg);
-                }
-                if (diagnosticCollections.compiler !== null) {
-                    
-                    diagnosticCollections.compiler.delete(contractFile.uri);
-
-                    let lineNr = 1; // add default errors to line 0 if not known
-                    let matches = /(?:line\s+(\d+))/gm.exec(errormsg);
-                    if (matches && matches.length == 2) {
-                        //only one line ref
-                        lineNr = parseInt(matches[1]);
-                    }
-
-                    let lines = errormsg.split(/\r?\n/);
-                    console.log(errormsg);
-                    let shortmsg = lines[0];
-
-                    // IndexError
-                    if (lines.indexOf("SyntaxError: invalid syntax") > -1) {
-                        let matches = /line (\d+)/gm.exec(errormsg);
-                        if (matches.length >= 2) {
-                            lineNr = parseInt(matches[1]);
-                        }
-                        shortmsg = "SyntaxError: invalid syntax";
-                    } else {
-                        //match generic vyper exceptions
-                        let matches = /vyper\.exceptions\.\w+Exception:\s+(?:line\s+(\d+)).*$/gm.exec(errormsg);
-                        if (matches && matches.length > 0) {
-                            shortmsg = matches[0];
-                            if (matches.length >= 2) {
-                                lineNr = parseInt(matches[1]);
-                            }
-                        }
-                    }
-                    if (errormsg) {
-                        diagnosticCollections.compiler.set(contractFile.uri, [{
-                            code: '',
-                            message: shortmsg,
-                            range: new vscode.Range(new vscode.Position(lineNr - 1, 0), new vscode.Position(lineNr - 1, 255)),
-                            severity: vscode.DiagnosticSeverity.Error,
-                            source: errormsg,
-                            relatedInformation: []
-                        }]);
-                    }
-                }
-            }
-        )
-        .catch(ex => {
-            vscode.window.showErrorMessage('[Compiler Exception] ' + ex);
-            console.error(ex);
-        });
+    await checkVyper(options.paths[0]);
+    return compileAll(options);
 }
 
-function compileActiveFile(contractFile) {
-    return new Promise((resolve, reject) => {
-        if (!contractFile || contractFile.languageId !== VYPER_ID) {
-            reject("Not a vyper source file");
+function extractLineNumber(errormsg) {
+    let lineNr = 1;
+    const lineMatches = /(?:line\s+(\d+))/gm.exec(errormsg);
+    if (lineMatches && lineMatches.length === 2) {
+        lineNr = parseInt(lineMatches[1], 10);
+    }
+    return lineNr;
+}
+
+function parseErrorMessage(errormsg) {
+    const lines = errormsg.split(/\r?\n/);
+    let shortmsg = lines[0];
+    let lineNr = extractLineNumber(errormsg);
+
+    if (lines.indexOf('SyntaxError: invalid syntax') > -1) {
+        const matches = /line (\d+)/gm.exec(errormsg);
+        if (matches && matches.length >= 2) lineNr = parseInt(matches[1], 10);
+        shortmsg = 'SyntaxError: invalid syntax';
+    } else {
+        const vyperMatch = /vyper\.exceptions\.\w+Exception:\s+(?:line\s+(\d+)).*$/gm.exec(errormsg);
+        if (vyperMatch && vyperMatch.length > 0) {
+            shortmsg = vyperMatch[0];
+            if (vyperMatch.length >= 2) lineNr = parseInt(vyperMatch[1], 10);
+        }
+    }
+
+    return { shortmsg, lineNr };
+}
+
+/**
+ * Command handler - handles both TextDocument and Uri inputs
+ */
+async function compileActiveFileCommand(input) {
+    let contractFile;
+
+    if (!input) {
+        contractFile = vscode.window.activeTextEditor?.document;
+    } else if (input.uri) {
+        contractFile = input;
+    } else if (input.fsPath) {
+        try {
+            contractFile = await vscode.workspace.openTextDocument(input);
+        } catch (error) {
+            vscode.window.showErrorMessage(`[Compiler Error] Cannot open file: ${error.message}`);
             return;
         }
-        const fileExtension = contractFile.fileName.split('.').pop();
+    } else {
+        contractFile = vscode.window.activeTextEditor?.document;
+    }
 
-        if (fileExtension !== "vy") {
-            reject("Skipping compilation for interface file");
-            return;
+    if (!contractFile || !contractFile.uri) {
+        vscode.window.showErrorMessage('[Compiler Error] No active file to compile');
+        return;
+    }
+
+    try {
+        const success = await compileActiveFile(contractFile);
+
+        if (diagnosticCollections.compiler) {
+            diagnosticCollections.compiler.delete(contractFile.uri);
         }
-        let options = {
-            contractsDirectory: "./contracts",
-            working_directory: "",
-            all: true,
-            paths: [contractFile.uri.fsPath]
-        };
 
-        compileVyper(options, function (err, result, paths, compilerInfo) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(result, paths, compilerInfo);
-            }
-        });
-    });
+        if (settings.extensionConfig().compile.verbose) {
+            vscode.window.showInformationMessage('[Compiler success] ' + Object.keys(success).join(','));
+        } else {
+            vscode.window.setStatusBarMessage('Vyper: Compiled successfully', 3000);
+        }
+    } catch (errormsg) {
+        const errorString = String(errormsg);
+
+        if (settings.extensionConfig().compile.verbose) {
+            vscode.window.showErrorMessage('[Compiler Error] ' + errorString);
+        }
+
+        if (diagnosticCollections.compiler && contractFile.uri) {
+            diagnosticCollections.compiler.delete(contractFile.uri);
+            const { shortmsg, lineNr } = parseErrorMessage(errorString);
+
+            diagnosticCollections.compiler.set(contractFile.uri, [{
+                code: '',
+                message: shortmsg,
+                range: new vscode.Range(
+                    new vscode.Position(lineNr - 1, 0),
+                    new vscode.Position(lineNr - 1, 255)
+                ),
+                severity: vscode.DiagnosticSeverity.Error,
+                source: errorString,
+                relatedInformation: []
+            }]);
+        }
+    }
+}
+
+async function compileActiveFile(contractFile) {
+    if (!contractFile || contractFile.languageId !== VYPER_ID) {
+        throw new Error('Not a vyper source file');
+    }
+
+    const fileExtension = contractFile.fileName.split('.').pop();
+    if (fileExtension !== 'vy') {
+        throw new Error('Skipping compilation for interface file');
+    }
+
+    const options = {
+        contractsDirectory: './contracts',
+        working_directory: '',
+        all: true,
+        paths: [contractFile.uri.fsPath]
+    };
+
+    const { result } = await compileVyper(options);
+    return result;
 }
 
 function init(context, type) {
@@ -287,7 +304,7 @@ function init(context, type) {
 }
 
 module.exports = {
-    init: init,
+    init,
     compileContractCommand: compileActiveFileCommand,
     compileContract: compileActiveFile
 };

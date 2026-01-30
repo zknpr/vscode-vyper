@@ -1,61 +1,61 @@
 'use strict';
-/** 
+/**
  * @author github.com/tintinweb
  * @license MIT
- * 
+ *
  * */
 const vscode = require('vscode');
 
 const styles = {
     foreGroundOk: vscode.window.createTextEditorDecorationType({
         dark: {
-            color: "#C0C0C0",
+            color: '#C0C0C0'
         },
         light: {
-            color: "#000000",
+            color: '#000000'
         },
-        fontWeight: "bold"
+        fontWeight: 'bold'
     }),
     foreGroundWarning: vscode.window.createTextEditorDecorationType({
         dark: {
-            color: "#f56262"
+            color: '#f56262'
         },
         light: {
-            color: "#d65353"
+            color: '#d65353'
         },
-        fontWeight: "bold",
+        fontWeight: 'bold'
     }),
     foreGroundWarningUnderline: vscode.window.createTextEditorDecorationType({
         dark: {
-            color: "#f56262"
+            color: '#f56262'
         },
         light: {
-            color: "#d65353"
+            color: '#d65353'
         },
-        textDecoration: "underline"
+        textDecoration: 'underline'
     }),
     foreGroundInfoUnderline: vscode.window.createTextEditorDecorationType({
         dark: {
-            color: "#ffc570"
+            color: '#ffc570'
         },
         light: {
-            color: "#e4a13c"
+            color: '#e4a13c'
         },
-        textDecoration: "underline"
+        textDecoration: 'underline'
     }),
     foreGroundNewEmit: vscode.window.createTextEditorDecorationType({
         dark: {
-            color: "#fffffff5",
+            color: '#fffffff5'
         },
         light: {
-            color: ""
+            color: ''
         },
-        fontWeight: "#c200b2ad"
+        fontWeight: '#c200b2ad'
     }),
     boldUnderline: vscode.window.createTextEditorDecorationType({
-        fontWeight: "bold",
-        textDecoration: "underline"
-    }),
+        fontWeight: 'bold',
+        textDecoration: 'underline'
+    })
 };
 
 async function decorateWords(editor, decorules, decoStyle) {
@@ -63,18 +63,18 @@ async function decorateWords(editor, decorules, decoStyle) {
         if (!editor) {
             return;
         }
-        var decos = [];
+        const decos = [];
         const text = editor.document.getText();
 
-        decorules.forEach(function (rule) {
+        decorules.forEach(function(rule) {
             //var regEx = new RegExp("\\b" +word+"\\b" ,"g");
-            var regEx = new RegExp(rule.regex, "gm");
+            const regEx = new RegExp(rule.regex, 'gm');
             let match;
-            while (match = regEx.exec(text)) {
-                var startPos = editor.document.positionAt(match.index);
-                var endPos = editor.document.positionAt(match.index + match[rule.captureGroup].trim().length);
+            while ((match = regEx.exec(text)) !== null) {
+                const startPos = editor.document.positionAt(match.index);
+                const endPos = editor.document.positionAt(match.index + match[rule.captureGroup].trim().length);
                 //endPos.line = startPos.line; //hacky force
-                var decoration = {
+                const decoration = {
                     range: new vscode.Range(startPos, endPos),
                     hoverMessage: rule.hoverMessage
                 };

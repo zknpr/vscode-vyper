@@ -1,11 +1,41 @@
+# TypeScript (not used in this project)
 **/*.ts
 **/tsconfig.json
 !file.ts
+
+# Build artifacts and packages
 **/*.zip
-*.gitignore
-*.py
 *.vsix
+
+# Config files
+*.gitignore
+.prettierrc
+.prettierignore
+eslint.config.js
+
+# Python files (except vyper contract examples)
+*.py
+
+# Directories to exclude
 **/.vscode/**
 **/tmp/**
 **/test/**
 **/webpack/**
+**/config/**
+
+# Virtual environments (these can be huge)
+**/.venv/**
+**/venv/**
+**/virtualenv/**
+**/.virtualenv/**
+**/env/**
+**/.env/**
+
+# Development files
+**/node_modules/**
+**/.git/**
+.github/**
+scripts/**
+
+# Documentation
+CHANGELOG.md
