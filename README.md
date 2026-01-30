@@ -14,6 +14,7 @@ Ethereum [Vyper](https://www.vyperlang.org/) Language Support for [Visual Studio
 `ext install tintinweb.vscode-vyper`
 
 
+
 <sup>Vyper syntax also available on [vscode.dev](https://vscode.dev)!</sup> 
 
 ## Features
