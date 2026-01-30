@@ -181,7 +181,7 @@
         "@types/vscode": "^1.85.0",
         "@vscode/test-web": "^0.0.78",
         "@vscode/vsce": "^3.2.2",
-        "chai": "^5.1.2",
+        "chai": "^6.2.2",
         "eslint": "^9.18.0",
         "mocha": "^11.7.5",
         "prettier": "^3.4.2",
