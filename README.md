@@ -1,17 +1,17 @@
-[<img height="71" alt="get in touch with Consensys Diligence" src="https://user-images.githubusercontent.com/2865694/56826101-91dcf380-685b-11e9-937c-af49c2510aa0.png">](https://consensys.io/diligence/) &nbsp; and &nbsp; [<img height="48" alt="get in touch with Consensys Diligence" src="https://github.com/zknpr/vscode-vyper-next/assets/2865694/e627c8ef-79f5-4efc-acbc-8a70e1105af3">](https://www.chainsecurity.com)<br/>
+[<img height="71" alt="get in touch with Consensys Diligence" src="https://user-images.githubusercontent.com/2865694/56826101-91dcf380-685b-11e9-937c-af49c2510aa0.png">](https://consensys.io/diligence/) &nbsp; and &nbsp; [<img height="48" alt="get in touch with Consensys Diligence" src="https://github.com/zknpr/vscode-vyper-ex/assets/2865694/e627c8ef-79f5-4efc-acbc-8a70e1105af3">](https://www.chainsecurity.com)<br/>
 <sup>
 [[  🌐  ](https://consensys.io/diligence/)  [  📩  ](mailto:diligence@consensys.net)  [  🔥  ](https://consensys.io/diligence/research)]
 </sup><br/><br/>
-[<img height="30" alt="vscode marketplace" src="https://github.com/user-attachments/assets/030dde14-1745-4f4e-852c-b415db9c2050">](https://marketplace.visualstudio.com/items?itemName=zknpr.vscode-vyper-next) [<img height="30" alt="open-vsx" src="https://github.com/user-attachments/assets/975d31ca-5259-4bf0-8c40-b2e25cdd5ccb">](https://open-vsx.org/extension/zknpr/vscode-vyper-next) 
+[<img height="30" alt="vscode marketplace" src="https://github.com/user-attachments/assets/030dde14-1745-4f4e-852c-b415db9c2050">](https://marketplace.visualstudio.com/items?itemName=zknpr.vscode-vyper-ex) [<img height="30" alt="open-vsx" src="https://github.com/user-attachments/assets/975d31ca-5259-4bf0-8c40-b2e25cdd5ccb">](https://open-vsx.org/extension/zknpr/vscode-vyper-ex) 
 
-# vscode-vyper-next    
+# vscode-vyper-ex    
    
 ![img](./images/icon.png)
 
 Ethereum [Vyper](https://www.vyperlang.org/) Language Support for [Visual Studio Code](https://code.visualstudio.com/) & [VSCodium](https://vscodium.com/)
 
 
-`ext install zknpr.vscode-vyper-next`
+`ext install zknpr.vscode-vyper-ex`
 
 
 

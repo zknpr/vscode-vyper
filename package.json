@@ -1,6 +1,6 @@
 {
-    "name": "vscode-vyper-next",
-    "displayName": "Vyper",
+    "name": "vscode-vyper-ex",
+    "displayName": "VyperEx",
     "description": "Ethereum Vyper language support for Visual Studio Code",
     "license": "MIT",
     "version": "0.2.0",
@@ -29,11 +29,11 @@
         "Formatters"
     ],
     "bugs": {
-        "url": "https://github.com/zknpr/vscode-vyper-next/issues"
+        "url": "https://github.com/zknpr/vscode-vyper-ex/issues"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/zknpr/vscode-vyper-next"
+        "url": "https://github.com/zknpr/vscode-vyper-ex"
     },
     "main": "./src/extension.js",
     "browser": "./dist/web/extension.js",
