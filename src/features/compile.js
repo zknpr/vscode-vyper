@@ -1,7 +1,7 @@
 'use strict';
 /**
  * @file compile.js
- * @author github.com/tintinweb
+ * @author github.com/zknpr
  * @license MIT
  *
  * Vyper compiler integration for VSCode.
@@ -37,7 +37,6 @@ const compiler = {
 };
 
 let VYPER_ID = null;
-const VYPER_PATTERN = ' **/*.{vy,vyi}';
 
 const diagnosticCollections = {
     compiler: null

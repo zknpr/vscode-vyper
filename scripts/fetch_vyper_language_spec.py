@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-@author github.com/tintinweb
+@author github.com/zknpr
 
 vyper language specification merger for vscode
 

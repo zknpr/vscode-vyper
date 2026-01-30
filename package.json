@@ -1,5 +1,5 @@
 {
-    "name": "vscode-vyper-ex",
+    "name": "vscode-vyper-next",
     "displayName": "Vyper",
     "description": "Ethereum Vyper language support for Visual Studio Code",
     "license": "MIT",
@@ -29,11 +29,11 @@
         "Formatters"
     ],
     "bugs": {
-        "url": "https://github.com/zknpr/vscode-vyper-ex/issues"
+        "url": "https://github.com/zknpr/vscode-vyper-next/issues"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/zknpr/vscode-vyper-ex"
+        "url": "https://github.com/zknpr/vscode-vyper-next"
     },
     "main": "./src/extension.js",
     "browser": "./dist/web/extension.js",
@@ -169,7 +169,7 @@
         "lint:fix": "eslint src --ext .js,.ts --fix",
         "format": "prettier --write \"src/**/*.{js,ts,json}\"",
         "format:check": "prettier --check \"src/**/*.{js,ts,json}\"",
-        "test": "npm run compile-web && vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js",
+        "test": "npm run compile-web && vscode-test-web --headless --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js",
         "pretest": "npm run compile-web",
         "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. .",
         "fetchGrammar": "rm -f syntaxes/vyper.tmLanguage.json && python3 ./scripts/fetch_vyper_language_spec.py > syntaxes/vyper.tmLanguage.json",
@@ -179,10 +179,11 @@
         "@eslint/js": "^9.18.0",
         "@types/node": "^20.11.0",
         "@types/vscode": "^1.85.0",
-        "@vscode/test-web": "^0.0.62",
+        "@vscode/test-web": "^0.0.78",
         "@vscode/vsce": "^3.2.2",
         "chai": "^5.1.2",
         "eslint": "^9.18.0",
+        "mocha": "^11.3.0",
         "prettier": "^3.4.2",
         "webpack": "^5.97.1",
         "webpack-cli": "^6.0.1"

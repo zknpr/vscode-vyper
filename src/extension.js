@@ -1,7 +1,7 @@
 'use strict';
 /**
  * @file extension.js
- * @author github.com/tintinweb
+ * @author github.com/zknpr
  * @license MIT
  *
  * VSCode extension for Vyper smart contract development.

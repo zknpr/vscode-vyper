@@ -1,6 +1,6 @@
 'use strict';
 /**
- * @author github.com/tintinweb
+ * @author github.com/zknpr
  * @license MIT
  *
  * */

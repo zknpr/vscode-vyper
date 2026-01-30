@@ -1,4 +1,4 @@
-// tintinweb: original taken from https://raw.githubusercontent.com/Microsoft/vscode/master/extensions/python/language-configuration.json
+// zknpr: original taken from https://raw.githubusercontent.com/Microsoft/vscode/master/extensions/python/language-configuration.json
 {
 	"comments": {
 		"lineComment": "#",

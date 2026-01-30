@@ -1,6 +1,6 @@
 'use strict';
 /**
- * @author github.com/tintinweb
+ * @author github.com/zknpr
  * @license MIT
  *
  * language definition based on: https://raw.githubusercontent.com/Microsoft/vscode/master/extensions/python/syntaxes/MagicPython.tmLanguage.json (MIT)
