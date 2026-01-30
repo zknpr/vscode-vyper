@@ -16,7 +16,7 @@ function formatExternal(text, command) {
             if (error) {
                 console.error(`Formatter error: ${error.message}`);
                 if (stderr) console.error(`Formatter stderr: ${stderr}`);
-                // On error, reject so we can fallback or do nothing
+                // On error, reject to allow fallback
                 reject(error);
                 return;
             }
@@ -76,7 +76,7 @@ function formatBuiltin(text) {
         '\\+', '-', '~', '\\*'
     ];
 
-    // Lookbehind for word char, closing paren, closing bracket, or quote (if string wasn't masked, but it is)
+    // Lookbehind for word char, closing paren, or closing bracket
     // Negative lookahead (?![=*]) prevents matching the first char of a compound operator (e.g. +=, -=, *=, **)
     const ambiguousRegex = new RegExp(`(?<=[\\w)\\]])\\s*(${ambiguousOps.join('|')})(?![=*])\\s*`, 'g');
     maskedText = maskedText.replace(ambiguousRegex, ' $1 ');
@@ -125,10 +125,6 @@ class VyperFormattingProvider {
                 formatted = await formatExternal(text, externalFormatter);
             } catch (e) {
                 vscode.window.showErrorMessage(`Vyper formatter failed: ${e.message}`);
-                // Fallback to builtin or return empty edits?
-                // Usually better to not mangle code if formatter fails.
-                // But user selected "Improve built-in", maybe fallback?
-                // Let's fallback for now but warn.
                 console.log('Falling back to built-in formatter');
                 formatted = formatBuiltin(text);
             }
