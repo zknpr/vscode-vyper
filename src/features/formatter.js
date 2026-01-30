@@ -53,27 +53,32 @@ function formatBuiltin(text) {
     maskedText = maskedText.replace(/\t/g, '    ');
 
     // Group 1: Always binary/safe to pad
-    // Order by length descending
+    // Order by length descending to ensure compound operators are matched first
     const alwaysBinaryOps = [
+        // 3 chars
+        '\\*\\*=', '<<=', '>>=',
+        // 2 chars
         '//', '->',
         '==', '!=', '<=', '>=',
         '\\+=', '-=', '\\*=', '/=', '%=',
-        '=', '/', '%', '<', '>'
+        '&=', '\\|=', '\\^=',
+        '\\*\\*', '<<', '>>',
+        // 1 char
+        '=', '/', '%', '<', '>',
+        '&', '\\|', '\\^'
     ];
+
     const safeRegex = new RegExp(`\\s*(${alwaysBinaryOps.join('|')})\\s*`, 'g');
     maskedText = maskedText.replace(safeRegex, ' $1 ');
 
-    // Group 2: Context-sensitive (arithmetic + - * **)
-    // Only pad if preceded by an operand (identifier, number placeholder, close paren/bracket)
-    // This distinguishes binary op from unary op (e.g. -1, *args)
-    // Placeholders end with _, so \w matches them.
+    // Group 2: Context-sensitive (arithmetic + - and unary ~)
     const ambiguousOps = [
-        '\\*\\*',
-        '\\+', '-', '\\*'
+        '\\+', '-', '~', '\\*'
     ];
+
     // Lookbehind for word char, closing paren, closing bracket, or quote (if string wasn't masked, but it is)
-    // We check for \w (includes _ for placeholders), ), ]
-    const ambiguousRegex = new RegExp(`(?<=[\\w)\\]])\\s*(${ambiguousOps.join('|')})\\s*`, 'g');
+    // Negative lookahead (?![=*]) prevents matching the first char of a compound operator (e.g. +=, -=, *=, **)
+    const ambiguousRegex = new RegExp(`(?<=[\\w)\\]])\\s*(${ambiguousOps.join('|')})(?![=*])\\s*`, 'g');
     maskedText = maskedText.replace(ambiguousRegex, ' $1 ');
 
     // Space after comma
