@@ -1,7 +1,7 @@
 {
     "name": "vscode-vyper-ex",
     "displayName": "VyperEx",
-    "description": "Ethereum Vyper language support for Visual Studio Code",
+    "description": "Extended Ethereum Vyper language support for Visual Studio Code",
     "license": "MIT",
     "version": "0.2.0",
     "keywords": [
